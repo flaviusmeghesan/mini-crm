@@ -6,6 +6,61 @@ Un sistem CRM complet **end-to-end** care combină:
 -   un **Backend Node.js rapid**
 -   **automatizări complexe în n8n** pentru lead scoring, routing și
     follow-up automat
+-   un **Video prezentare** https://www.youtube.com/watch?v=hYqUFwL39ko
+
+## 🚀 Ghid de Instalare Rapidă (\< 5 minute)
+
+### **1. Backend Setup**
+
+``` bash
+cd server
+npm install
+node server.js
+```
+
+-   Server disponibil la **http://localhost:3001**
+-   Baza de date `database.sqlite` se creează automat
+
+------------------------------------------------------------------------
+
+### **2. Frontend Setup**
+
+``` bash
+npm install
+npm run dev
+```
+
+-   Aplicația va porni la: **http://localhost:5173**
+
+------------------------------------------------------------------------
+
+### **3. n8n Automation Setup**
+
+Instalare:
+
+``` bash
+npm install n8n -g
+```
+
+Pornire:
+
+``` bash
+n8n start
+```
+
+-   n8n rulează pe **http://localhost:5678**
+-   În UI: *Workflows → Import from File*
+-   Selectezi fișierele `.json` din folderul **/n8n**
+
+------------------------------------------------------------------------
+
+## 📂 Structură Proiect
+
+    /src      – Codul sursă React (Frontend)
+    /server   – API Node.js + baza SQLite
+    /n8n      – Workflow-urile de automatizare n8n
+
+------------------------------------------------------------------------
 
 ------------------------------------------------------------------------
 
@@ -60,59 +115,5 @@ Un sistem CRM complet **end-to-end** care combină:
 
 -   Generare raport direct din Dashboard\
 -   Procesare prin backend → n8n
-
-------------------------------------------------------------------------
-
-## 🚀 Ghid de Instalare Rapidă (\< 5 minute)
-
-### **1. Backend Setup**
-
-``` bash
-cd server
-npm install
-node server.js
-```
-
--   Server disponibil la **http://localhost:3001**
--   Baza de date `database.sqlite` se creează automat
-
-------------------------------------------------------------------------
-
-### **2. Frontend Setup**
-
-``` bash
-npm install
-npm run dev
-```
-
--   Aplicația va porni la: **http://localhost:5173**
-
-------------------------------------------------------------------------
-
-### **3. n8n Automation Setup**
-
-Instalare:
-
-``` bash
-npm install n8n -g
-```
-
-Pornire:
-
-``` bash
-n8n start
-```
-
--   n8n rulează pe **http://localhost:5678**
--   În UI: *Workflows → Import from File*
--   Selectezi fișierele `.json` din folderul **/n8n**
-
-------------------------------------------------------------------------
-
-## 📂 Structură Proiect
-
-    /src      – Codul sursă React (Frontend)
-    /server   – API Node.js + baza SQLite
-    /n8n      – Workflow-urile de automatizare n8n
 
 ------------------------------------------------------------------------
