@@ -6,7 +6,7 @@ Un sistem CRM complet **end-to-end** care combină:
 -   un **Backend Node.js rapid**
 -   **automatizări complexe în n8n** pentru lead scoring, routing și
     follow-up automat
--   un **Video prezentare** https://www.youtube.com/watch?v=hYqUFwL39ko
+-   **Video prezentare** https://www.youtube.com/watch?v=hYqUFwL39ko
 
 ## 🚀 Ghid de Instalare Rapidă (\< 5 minute)
 
