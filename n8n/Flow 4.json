@@ -1,0 +1,109 @@
+{
+  "name": "Flow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "http://localhost:3001/leads",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "800c7ad2-87b6-4895-bdd9-67a3044a41e0",
+      "name": "Get leads"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "d0831c24-7b98-482f-ada2-f02ade72bbe7",
+      "name": "Convert to CSV"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "responseDataSource": "set",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "3ccd490d-49b0-4e65-9efe-b09c2338713c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "export-csv",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cba15f23-99e3-4e73-8a1d-e52ca6aca872",
+      "name": "Webhook",
+      "webhookId": "07f2e414-ede8-4d10-8bb0-e0ac93c4bee4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get leads": {
+      "main": [
+        [
+          {
+            "node": "Convert to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to CSV": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6c46d43b-92f9-46d2-8fbb-01fa16ef7646",
+  "meta": {
+    "instanceId": "fd53077549c305e3c3f3b39238a114b067172210c3abbd5694c0e59540219167"
+  },
+  "id": "3ErACC8XC1bFUgjo",
+  "tags": []
+}

@@ -1,0 +1,121 @@
+{
+  "name": "Flow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "63611d7a-6de9-4b08-8dbb-901062f2ad82",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/leads",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "da04c4e9-4415-4f44-af69-a0118a17e705",
+      "name": "Get all leads"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. lista de la backend\nconst response = $input.all()[0].json;\nconst leads = response.data ? response.data : [];\n\nconst updates = [];\nconst now = new Date();\n\n// 2. Trecem prin fiecare lead\nfor (const lead of leads) {\n  \n  if (!lead.last_interaction) continue;\n\n  const lastInteraction = new Date(lead.last_interaction);\n  \n  // Calcul diferența în ore\n  const diffMs = now - lastInteraction;\n  const diffHours = diffMs / (1000 * 60 * 60);\n  \n  let newStatus = null;\n\n  // --- REGULILE DE BUSINESS ---\n\n  // Statusuri pe care NU le ating (sunt finale sau programate)\n  const protectedStatuses = ['Won', 'Lost', 'Call Booked', 'Unqualified', 'Cold'];\n\n  // Regula 1: COLD (> 48h)\n  // Dacă au trecut 48h și lead-ul nu e într-un status protejat\n  if (diffHours > 48) {\n    if (!protectedStatuses.includes(lead.status)) {\n       newStatus = 'Cold';\n    }\n  }\n  // Regula 2: NEEDS FOLLOWUP (> 2h)\n  // Dacă au trecut 2h și statusul e încă la început (\"New Lead\")\n  else if (diffHours > 0) {\n    if (lead.status === 'New Lead' || lead.status === 'New') {\n       newStatus = 'Needs Followup';\n    }\n  }\n\n  // 3. Dacă am găsit o schimbare necesară, îl pun pe lista de update\n  if (newStatus) {\n    updates.push({\n      json: {\n        id: lead.id,\n        status: newStatus,\n        current_status: lead.status, \n        hours_since: Math.round(diffHours) \n      }\n    });\n  }\n}\n\nreturn updates;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "95a5d3d9-ac75-4edf-9783-ed25d0271c32",
+      "name": "Logica de filtrare"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://localhost:3001/leads/{{ $json.id }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.status }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "a4561e3f-a248-47bc-9297-4475cee5a127",
+      "name": "Update Status"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get all leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all leads": {
+      "main": [
+        [
+          {
+            "node": "Logica de filtrare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logica de filtrare": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fa3620d8-62b1-4bf9-b207-cd7cf5a5f8a7",
+  "meta": {
+    "instanceId": "fd53077549c305e3c3f3b39238a114b067172210c3abbd5694c0e59540219167"
+  },
+  "id": "bgg5PKoI5HXFwga4",
+  "tags": []
+}

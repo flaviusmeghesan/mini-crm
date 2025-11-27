@@ -1,0 +1,319 @@
+{
+  "name": "Flow 1 & 2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/message",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        -16
+      ],
+      "id": "9db42d13-1fbb-4432-a17e-98d6e1ff9a36",
+      "name": "Webhook",
+      "webhookId": "8042108b-ec28-4ed9-8437-ed79e116ca16"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cc750c80-9503-4c46-b60b-e7d0b9822993",
+              "leftValue": "={{ $json.found }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "9fd4b30a-af10-4e90-b263-97864bf91a7d",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "138a2b67-9f5a-4e68-9aea-f037920def74",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://localhost:3001/leads/{{ $json.data.lead_id }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"score\": \"{{ $('Calculare scor').item.json.new_score }}\",\n  \"status\": \"{{ $('Calculare scor').item.json.new_status }}\",\n  \"last_interaction\": \"{{ $('Calculare scor').item.json.timestamp }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1424,
+        -16
+      ],
+      "id": "cb08a84b-92d8-4ea0-a71c-a74617fe976f",
+      "name": "Update Lead"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3001/messages",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "lead_id",
+              "value": "={{ $json.lead_id }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message_text }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $json.timestamp }}"
+            },
+            {
+              "name": "sender",
+              "value": "lead"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1232,
+        -16
+      ],
+      "id": "3e3a9abc-a977-4542-bfc1-91b2babcf2c4",
+      "name": "Salveaza mesaj"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/leads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.body.user}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        48,
+        -16
+      ],
+      "id": "c6acf1f4-3dc3-491f-a37d-970df2f62423",
+      "name": "Verifica lead"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3001/leads",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('Filtru').item.json.original_name }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $('Filtru').item.json.original_name }}@test.com"
+            },
+            {
+              "name": "status",
+              "value": "New"
+            },
+            {
+              "name": "score",
+              "value": "0"
+            },
+            {
+              "name": "source",
+              "value": "Inbound Message"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        624,
+        160
+      ],
+      "id": "484e3d8b-0c8a-4590-961c-4a986a4a22d1",
+      "name": "Create lead"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Luăm mesajul original din Webhook\nconst message = $('Webhook').first().json.body.message.toLowerCase();\n\n// 2. Luăm datele lead-ului (din pasul Merge)\nconst inputItem = $input.item.json;\n\n// NORMALIZARE DATE (verificăm unde e obiectul lead)\nlet lead = {};\nif (inputItem.data && inputItem.data.id) {\n    lead = inputItem.data; // Cazul Create Lead\n} else if (inputItem.id) {\n    lead = inputItem;      // Cazul Found Lead\n} else {\n    lead = inputItem; \n}\n\nconst leadId = lead.id;\nconst currentScore = parseInt(lead.score) || 0;\n\n// --- MODIFICARE AICI: Folosim exact statusul din lista ta ---\n// Dacă nu are status (e nou), îi punem \"New Lead\" în loc de \"New\"\nlet status = lead.status || 'New Lead';\n\n// 3. Calculam punctele\nlet points = 0;\n\n// Logica de scoring\nif (message.includes('urgent') || message.includes('contract') || message.includes('ready')) points += 20;\nif (message.includes('interested') || message.includes('pret') || message.includes('buy')) points += 10;\nif (message.includes('no') || message.includes('stop')) points -= 10;\n\nconst newScore = currentScore + points;\n\n// 4. Schimbare automata status\n// Dacă trece de 40 puncte și nu e deja câștigat (\"Won\") sau programat (\"Call Booked\")\nif (newScore > 40) {\n    // Ne asigurăm că nu suprascriem un status final\n    if (status !== 'Won' && status !== 'Call Booked' && status !== 'Lost') {\n        status = 'Qualified';\n    }\n}\n\n// Opțional: Dacă scorul scade prea mult (ex: sub -10), îl putem marca \"Unqualified\"\nif (newScore < -10 && status !== 'Lost') {\n    status = 'Unqualified';\n}\n\n// 5. Returnăm datele curate\nreturn {\n  json: {\n    lead_id: leadId,\n    new_score: newScore,\n    new_status: status,\n    message_text: $('Webhook').first().json.body.message,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        -16
+      ],
+      "id": "e0100f40-ef8f-447c-a873-14c3d87084d9",
+      "name": "Calculare scor",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Luăm userul căutat din Webhook\nconst searchedUser = $('Webhook').first().json.body.user;\n\n// 2. Luăm lista completă venită de la Backend\n// Structura ta este: { message: \"success\", data: [...] }\nconst response = $input.all()[0].json;\nconst allLeads = response.data ? response.data : [];\n\n// 3. Căutăm manual prin listă (JavaScript Array Find)\nconst foundLead = allLeads.find(lead => \n    lead.name === searchedUser || \n    lead.email === searchedUser // sau lead.email.includes(searchedUser)\n);\n\n// 4. Returnăm rezultatul pentru nodul IF\nif (foundLead) {\n    // L-am găsit! Trimitem datele lui mai departe.\n    return [ { json: { \n        found: true, \n        id: foundLead.id, \n        score: foundLead.score, \n        status: foundLead.status \n    } } ];\n} else {\n    // Nu l-am găsit. Trimitem semnal să creăm unul nou.\n    return [ { json: { \n        found: false, \n        original_name: searchedUser \n    } } ];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -16
+      ],
+      "id": "694d61ef-4a2b-4eca-8523-17b6e3facf08",
+      "name": "Filtru",
+      "alwaysOutputData": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verifica lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Calculare scor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salveaza mesaj": {
+      "main": [
+        [
+          {
+            "node": "Update Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica lead": {
+      "main": [
+        [
+          {
+            "node": "Filtru",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create lead": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Calculare scor": {
+      "main": [
+        [
+          {
+            "node": "Salveaza mesaj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtru": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cfbaa6c5-3903-4f1c-80bd-ccf5abbc1e0b",
+  "meta": {
+    "instanceId": "fd53077549c305e3c3f3b39238a114b067172210c3abbd5694c0e59540219167"
+  },
+  "id": "wNR38at9rN5lbOR2",
+  "tags": []
+}
